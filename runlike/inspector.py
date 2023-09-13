@@ -48,11 +48,7 @@ class Inspector(object):
         return self.get_fact(path, self.container_facts[0])
 
     def get_image_fact(self, path):
-        if self.image_facts:
-            return self.get_fact(path, self.image_facts[0])
-        else:
-            # in case of stdin mode
-            return None
+        return self.get_fact(path, self.image_facts[0]) if self.image_facts else None
 
     def get_fact(self, path, value):
         parts = path.split(".")
@@ -83,8 +79,11 @@ class Inspector(object):
 
     def parse_macaddress(self):
         try:
-            mac_address = self.get_container_fact("Config.MacAddress") or self.get_container_fact("NetworkSettings.MacAddress") or {}
-            if mac_address:
+            if (
+                mac_address := self.get_container_fact("Config.MacAddress")
+                or self.get_container_fact("NetworkSettings.MacAddress")
+                or {}
+            ):
                 self.options.append(f"--mac-address={mac_address}")
         except Exception:
             pass
@@ -109,7 +108,7 @@ class Inspector(object):
                     host_ip = options[0]['HostIp']
                     host_port = options[0]['HostPort']
 
-                    if host_port != '0' and host_port != '':
+                    if host_port not in ['0', '']:
                         host_port_part = f"{host_port}:"
 
                     if host_ip not in ['0.0.0.0', '']:
@@ -201,23 +200,21 @@ class Inspector(object):
         self.options += [f"--add-host {host}" for host in hosts]
 
     def parse_workdir(self):
-        workdir = self.get_container_fact("Config.WorkingDir")
-        if workdir:
+        if workdir := self.get_container_fact("Config.WorkingDir"):
             self.options.append(f"--workdir={workdir}")
 
     def parse_runtime(self):
-        runtime = self.get_container_fact("HostConfig.Runtime")
-        if runtime:
+        if runtime := self.get_container_fact("HostConfig.Runtime"):
             self.options.append(f"--runtime={runtime}")
 
     def parse_memory(self):
-        memory = self.get_container_fact("HostConfig.Memory")
-        if memory:
+        if memory := self.get_container_fact("HostConfig.Memory"):
             self.options.append(f"--memory=\"{memory}\"")
 
     def parse_memory_reservation(self):
-        memory_reservation = self.get_container_fact("HostConfig.MemoryReservation")
-        if memory_reservation:
+        if memory_reservation := self.get_container_fact(
+            "HostConfig.MemoryReservation"
+        ):
             self.options.append(f"--memory-reservation=\"{memory_reservation}\"")
 
     def format_cli(self):
@@ -274,8 +271,7 @@ class Inspector(object):
             parameters += self.options
         parameters.append(image)
 
-        cmd_parts = self.get_container_fact("Config.Cmd")
-        if cmd_parts:
+        if cmd_parts := self.get_container_fact("Config.Cmd"):
             # NOTE: pipes.quote() performs syntactically correct
             # quoting and replace operation below is needed just for
             # aesthetic reasons and visual similarity with old output.
