@@ -60,7 +60,7 @@ class TestRunlike(BaseTest):
 
     def test_host_volumes(self):
         cur_dir = os.path.dirname(os.path.realpath(__file__))
-        self.expect_substr("--volume=%s:/workdir" % pipes.quote(cur_dir))
+        self.expect_substr(f"--volume={pipes.quote(cur_dir)}:/workdir")
 
     def test_no_host_volume(self):
         self.expect_substr('--volume=/random_volume')
@@ -157,7 +157,7 @@ class TestRunlike(BaseTest):
 
     def test_env(self):
         val = '''FOO=thing="quoted value with 'spaces' and 'single quotes'"'''
-        self.expect_substr("""--env=%s""" % pipes.quote(val))
+        self.expect_substr(f"""--env={pipes.quote(val)}""")
         self.expect_substr("--env=SET_WITHOUT_VALUE")
         self.dont_expect_substr("--env=IMAGE_ENV")
         self.expect_substr("--env='UTF_8=ユーザー別サイト'")
